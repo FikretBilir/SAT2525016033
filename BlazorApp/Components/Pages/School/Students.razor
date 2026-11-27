@@ -1,4 +1,4 @@
-@page "/stdn"
+@page "/students"
  
 @*XForm*@
 
@@ -37,54 +37,48 @@
 @*XTable*@
 
 <XTable TItem="Entity"
-        Model="dbModel"
-        FieldDefinitions="FieldDefinitions"
-
         OnNew="() => form.Open(Operation.Insert)"
         OnUpdate="item => form.Open(Operation.Update, item)"
         OnDelete="item => form.Open(Operation.Delete, item)"
-
-        
+        Model="dbModel"
+        FieldDefinitions="FieldDefinitions"
         OnSave="() => dbProvider.SetItemsAsync(dbModel)" />
-        
+
 @foreach(var i in dbModel.Items)
 {
-    @((MarkupString)$"<br/>{i.Item.Id} {i.Item.Name}")
+    @((MarkupString)$"<br/>{i.Item.Id} {i.Item.FirstName}")
 }
- 
- 
+
+@using BlazorApp.Components.XComponents
 @using DbModels
 @using DbProviders
- 
-@using Entity = Entities.Department
+@using Entity = Entities.Student
+@using Enums
+@using FieldDefinitions
+@using Helpers
 @inject IDbModel<Entity> dbModel
 @inject IDbProvider<Entity> dbProvider
  
 @code {
-
-        private static readonly FieldDefinition[] FieldDefinitions =
+    private static readonly FieldDefinition[] FieldDefinitions =
     [
         new(nameof(Entity.Id), "Id", "2-7,12,18-24,36"),
-        new(nameof(Entity.Name), "Ad", "ad1,ad2"),
-        new(nameof(Entity.Name), "Soyad", "soyad1,soyad2")
+        new(nameof(Entity.FirstName), "Öğrenci Adı", "ad1,ad2"),
+        new(nameof(Entity.LastName), "Öğrenci Soyadı", "soyad1,soyad2")
     ];
- 
     protected override Task OnInitializedAsync()
     {
         form = new XFormHelper<Entity>(dbModel);
-
-        dbModel.GetProcedure = "School.Sp_Get_Departments";
-        dbModel.SetProcedure = "School.Sp_Set_Departments";
+        dbModel.GetProcedure = "School.Sp_Get_Students";
+        dbModel.SetProcedure = "School.Sp_Set_Students";
         return LoadAsync();
     }
  
     private async Task LoadAsync()
     {
         form.Close();
-
         await dbProvider.GetItemsAsync(dbModel);
     }
 
-    private XFormHelper<Entity> form = default!;
- 
+  private XFormHelper<Entity> form = default!;
 }

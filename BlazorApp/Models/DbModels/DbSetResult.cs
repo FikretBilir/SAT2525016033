@@ -1,5 +1,5 @@
 namespace DbModels;
-
+ 
 public sealed class DbSetResult
 {
     public int OperationType { get; set; }

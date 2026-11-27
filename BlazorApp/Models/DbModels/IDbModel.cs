@@ -1,5 +1,5 @@
 namespace DbModels;
-
+ 
 public interface IDbModel<T>
 {
     List<DbItem<T>> Items { get; set; }

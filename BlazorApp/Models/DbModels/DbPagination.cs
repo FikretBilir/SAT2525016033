@@ -1,5 +1,5 @@
 namespace DbModels;
-
+ 
 public sealed class DbPagination
 {
     public int PageNumber { get; set; } = 1;

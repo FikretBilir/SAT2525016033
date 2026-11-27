@@ -1,5 +1,5 @@
 namespace DbModels;
-
+ 
 public sealed class DbFilter()
     : Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 {
@@ -13,4 +13,5 @@ public sealed class DbFilter()
             else base[key] = value;
         }
     }
+ 
 }

@@ -1,0 +1,248 @@
+@page "/departments_woc"
+ 
+<PageTitle>Bölümler (Alt Bileşen Kullanmadan)</PageTitle>
+<h1>Bölümler (Alt Bileşen Kullanmadan)</h1>
+ 
+@* Filtreleme *@
+<div class="row g-2 mt-3 align-items-center">
+    <div class="col-md-2">
+        <input class="form-control" aria-label="Id filtresi" placeholder="Id (1-3,5,7)"
+               @bind="dbModel.Where[nameof(Department.Id)]" disabled="@IsLocked" />
+    </div>
+    <div class="col-md-2">
+        <input class="form-control" aria-label="Bölüm adı filtresi" placeholder="Bölüm adı (ad1,ad2)"
+               @bind="dbModel.Where[nameof(Department.Name)]" disabled="@IsLocked" />
+    </div>
+    <div class="col-auto">
+        <button type="button" class="btn btn-outline-primary" @onclick="ApplyFilterAsync"
+                disabled="@IsLocked">Filtrele</button>
+    </div>
+</div>
+ 
+@* Sıralama ve Sayfalama *@
+<div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+    @* sıralama *@
+    <select class="form-select w-auto" aria-label="Sıralama" disabled="@IsLocked" @bind="dbModel.Pagination.OrderBy"
+            @bind:after="ApplyFilterAsync">
+        <option value="Id ASC">Id artan</option>
+        <option value="Id DESC">Id azalan</option>
+        <option value="Name ASC">Bölüm adı artan</option>
+        <option value="Name DESC">Bölüm adı azalan</option>
+    </select>
+ 
+    @*sayfalama : pagesize*@
+    <label for="department-page-size">Sayfa boyutu</label>
+    <select id="department-page-size" class="form-select w-auto" disabled="@IsLocked"
+            @bind="dbModel.Pagination.PageSize" @bind:after="ApplyFilterAsync">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+    </select>
+        
+    @*sayfalama : pagination*@
+ 
+    <button type="button" class="btn btn-outline-secondary" disabled="@(IsLocked || dbModel.Pagination.PageNumber <= 1)"
+            @onclick="() => GoToPageAsync(dbModel.Pagination.PageNumber - 1)">Önceki</button>
+    <span>Sayfa @(dbModel.Pagination.TotalPageCount == 0 ? 0 : dbModel.Pagination.PageNumber) /
+        @dbModel.Pagination.TotalPageCount · @dbModel.Pagination.TotalRecordCount kayıt</span>
+        <button type="button" class="btn btn-outline-secondary"
+                disabled="@(IsLocked || dbModel.Pagination.PageNumber >= dbModel.Pagination.TotalPageCount)"
+                @onclick="() => GoToPageAsync(dbModel.Pagination.PageNumber + 1)">Sonraki</button>
+    </div>
+ 
+    @* dbmodel mesajları (hata, sonuç) *@
+    @if (!string.IsNullOrWhiteSpace(dbModel.Message))
+    {
+        <div class="alert @(dbModel.IsError ? "alert-danger" : "alert-info") mt-3" role="status">
+            @dbModel.Message
+        </div>
+    }
+ 
+    <div class="d-flex gap-2 mt-3">
+        <button type="button" class="btn btn-outline-success" @onclick="BeginInsert" disabled="@IsLocked">Yeni
+            bölüm</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="LoadAsync" disabled="@IsLocked">Yenile</button>
+        </div>
+ 
+        @* Edit Form *@
+        @if (currentRow is not null)
+        {
+            <form class="border rounded p-3 mt-3" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                @if (currentRow.Operation == Operation.Delete)
+                {
+                    <p><strong>@currentRow.Item.Id - @currentRow.Item.Name</strong> kaydını silmek istiyor musunuz?</p>
+                    <button type="submit" class="btn btn-danger" disabled="@dbModel.IsBusy">Sil</button>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label for="department-name" class="form-label">Bölüm adı</label>
+                        <input id="department-name" class="form-control" required maxlength="100" @bind="currentRow.Item.Name"
+                               @bind:event="oninput" disabled="@dbModel.IsBusy" />
+                    </div>
+                    <button type="submit" class="btn btn-primary" disabled="@dbModel.IsBusy">
+                        @(currentRow.Operation == Operation.Insert ? "Ekle" : "Güncelle")
+                    </button>
+                }
+                <button type="button" class="btn btn-outline-secondary ms-2" @onclick="CancelEdit"
+                        disabled="@dbModel.IsBusy">Vazgeç</button>
+            </form>
+        }
+ 
+        @* Listeleme *@
+        <div class="table-responsive mt-3" aria-busy="@dbModel.IsBusy">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Bölüm adı</th>
+                        <th scope="col">Oluşturan</th>
+                        <th scope="col">Oluşturma zamanı</th>
+                        <th scope="col">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dbModel.IsBusy)
+                    {
+                        <tr>
+                            <td colspan="5" role="status">İşlem yapılıyor…</td>
+                        </tr>
+                    }
+                    else if (dbModel.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5">Gösterilecek kayıt yok.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in dbModel.Items)
+                        {
+                            <tr @key="row">
+                                <td>@row.Item.Id</td>
+                                <td>@row.Item.Name</td>
+                                <td>@row.Item.CreatedBy</td>
+                                <td>@row.Item.CreatedDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" disabled="@IsLocked"
+                                            @onclick="() => BeginOperation(row, Operation.Update)">Düzenle</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-1" disabled="@IsLocked"
+                                            @onclick="() => BeginOperation(row, Operation.Delete)">Sil</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+ 
+        @using DbModels
+    @using DbProviders
+    @using Entities
+    @using Enums
+ 
+@inject IDbProvider<Department> dbProvider
+@inject IDbModel<Department> dbModel
+ 
+@code {
+    private DbItem<Department>? currentRow;
+    private bool IsLocked => dbModel.IsBusy || currentRow is not null;
+ 
+    protected override Task OnInitializedAsync()
+    {
+        dbModel.GetProcedure = "School.Sp_Get_Departments";
+        dbModel.SetProcedure = "School.Sp_Set_Departments";
+ 
+        dbModel.SetValue = department =>
+            new { department.Id, department.Name };
+ 
+        return LoadAsync();
+    }
+ 
+    private Task LoadAsync()
+        => IsLocked
+            ? Task.CompletedTask
+            : dbProvider.GetItemsAsync(dbModel);
+ 
+    private Task ApplyFilterAsync()
+    {
+        if (IsLocked) return Task.CompletedTask;
+        dbModel.Pagination.PageNumber = 1;
+        return LoadAsync();
+    }
+ 
+    private Task GoToPageAsync(int pageNumber)
+    {
+        if (IsLocked || pageNumber < 1 || pageNumber > dbModel.Pagination.TotalPageCount)
+            return Task.CompletedTask;
+ 
+        dbModel.Pagination.PageNumber = pageNumber;
+        return LoadAsync();
+    }
+ 
+    private void BeginInsert()
+    {
+        if (IsLocked) return;
+        currentRow = new DbItem<Department>(new Department(), true);
+        dbModel.Items.Insert(0, currentRow);
+        ClearMessage();
+    }
+ 
+    private void BeginOperation(DbItem<Department> row, Operation operation)
+    {
+        if (IsLocked) return;
+        
+        row.Item = new Department
+        {
+            Id = row.Item.Id,
+            Name = row.Item.Name,
+            CreatedBy = row.Item.CreatedBy,
+            CreatedDateTime = row.Item.CreatedDateTime
+            };
+        
+        row.Operation = operation;
+        currentRow = row;
+        ClearMessage();
+    }
+ 
+    private void CancelEdit()
+    {
+        if (dbModel.IsBusy || currentRow is null) return;
+        if (currentRow.Original is null)
+            dbModel.Items.Remove(currentRow);
+        else
+        {
+            currentRow.Item = currentRow.Original;
+            currentRow.Operation = null;
+        }
+        currentRow = null;
+        ClearMessage();
+    }
+ 
+    private async Task SaveAsync()
+    {
+        if (dbModel.IsBusy || currentRow is null) return;
+        if (currentRow.Operation != Operation.Delete)
+        {
+            currentRow.Item.Name = currentRow.Item.Name?.Trim();
+            if (string.IsNullOrWhiteSpace(currentRow.Item.Name) || currentRow.Item.Name.Length > 100)
+            {
+                dbModel.IsError = true;
+                dbModel.Message = "Bölüm adı zorunludur ve en fazla 100 karakter olabilir.";
+                return;
+            }
+        }
+ 
+        await dbProvider.SetItemsAsync(dbModel);
+        if (!dbModel.IsError) currentRow = null;
+    }
+ 
+    private void ClearMessage()
+    {
+        dbModel.IsError = false;
+        dbModel.Message = null;
+    }
+ 
+}

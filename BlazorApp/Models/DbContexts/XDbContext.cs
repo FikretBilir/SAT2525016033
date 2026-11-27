@@ -1,6 +1,6 @@
 using Entities;
-using Microsoft.EntityFrameworkCore;
 using Logging;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace DbContexts;
@@ -11,9 +11,11 @@ public class XDbContext(DbContextOptions<XDbContext> options) : DbContext(option
     // DbSet özellikleri
     public DbSet<Department> Departments { get; set; }
     public DbSet<Student> Students { get; set; }
-    
-   public DbSet<LogEntryDb> Logs { get; set; }
-   public DbSet<LogEntryTrigger> LogsTrigger { get; set; }
+
+
+    public DbSet<LogEntryDb> Logs { get; set; }
+    public DbSet<LogEntryTrigger> LogsTrigger { get; set; }
+
 
     // Model oluşturma metodu
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -22,12 +24,13 @@ public class XDbContext(DbContextOptions<XDbContext> options) : DbContext(option
         base.OnModelCreating(modelBuilder);
 
         // Tablolar ve şema
-        modelBuilder.Entity<Department>().ToTable("Department", "School");
+        modelBuilder.Entity<Department>().ToTable("Department", "School", table => table.HasTrigger("TR_Department_Logs"));
         modelBuilder.Entity<Student>().ToTable("Student", "School");
 
-        modelBuilder.Entity<LogEntryDb>().ToTable("Logs", "dbo", table => table.ExcludeFromMigrations());
-        modelBuilder.Entity<LogEntryTrigger>().ToTable("Logs_Trigger", "dbo", table => table.ExcludeFromMigrations());
-        modelBuilder.Entity<LogEntryTrigger>().Property(log => log.Operation).IsUnicode(false);
+modelBuilder.Entity<LogEntryDb>().ToTable("Logs", "dbo", table => table.ExcludeFromMigrations());
+modelBuilder.Entity<LogEntryTrigger>().ToTable("Logs_Trigger", "dbo", table => table.ExcludeFromMigrations());
+modelBuilder.Entity<LogEntryTrigger>().Property(log => log.Operation).IsUnicode(false);
+
 
         // Bölüm ilişkisi
         modelBuilder.Entity<Student>()

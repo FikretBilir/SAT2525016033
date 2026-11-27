@@ -5,9 +5,9 @@ using BlazorApp.Components;
 using BlazorApp.Components.Account;
 using BlazorApp.Data;
 using DbContexts;
-using DbModels;
-using DbProviders;
 using UnitOfWorks;
+using DbProviders;
+using DbModels;
 using Logging;
 using Services;
 
@@ -29,27 +29,18 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
-    builder.Services.AddDbContextFactory<XDbContext>(options =>
+builder.Services.AddDbContextFactory<XDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-
-// Veritabanı katmanı
+//UOW, DbProvider, DbModel
 builder.Services.AddScoped<IUnitOfWork>(_ => UnitOfWork.Create(connectionString));
 builder.Services.AddScoped(typeof(IDbProvider<>), typeof(DbProvider<>));
 builder.Services.AddTransient(typeof(IDbModel<>), typeof(DbModel<>));
-
-    //Logging
+//Logging
 builder.Services.AddSingleton<FileLogger>();
 builder.Services.AddScoped<DbLogger>();
 builder.Services.AddScoped<LogService>();
@@ -57,7 +48,12 @@ builder.Services.AddScoped<LogReader>();
 
 //Modals
 builder.Services.AddScoped<ModalService>();
+builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
 
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
 

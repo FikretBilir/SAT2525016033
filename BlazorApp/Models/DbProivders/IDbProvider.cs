@@ -1,7 +1,7 @@
 using DbModels;
-
+ 
 namespace DbProviders;
-
+ 
 public interface IDbProvider<T>
 {
     Task GetItemsAsync(IDbModel<T> model);

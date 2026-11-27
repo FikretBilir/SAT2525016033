@@ -1,4 +1,3 @@
-
 namespace Entities;
 
 public class Department : BaseEntityCreated, IBaseEntity, IBaseEntityName
@@ -9,11 +8,6 @@ public class Department : BaseEntityCreated, IBaseEntity, IBaseEntityName
 
     // Gezinme özellikleri
     public List<Student> Students { get; set; } = [];
-
-    internal static object FirstName()
-    {
-        throw new NotImplementedException();
-    }
 
 
     // Metotlar

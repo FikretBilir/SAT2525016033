@@ -31,4 +31,3 @@ public enum UIAction
     [Color("secondary"), DisplayText("Kapat"), Symbol("✖")]
     Close
 }
- 
